@@ -1,31 +1,41 @@
+import os
+import torchvision.transforms as T
 from torchvision.datasets import STL10
-from torchvision import transforms
 from torch.utils.data import DataLoader
 
 BATCH_SIZE = 64
-IMAGE_SIZE = 96
-ROOT = "./data"
+ROOT = "./dataset"
 
-def get_stl10_data(batch_size=BATCH_SIZE, image_size=IMAGE_SIZE, root=ROOT):
-    transform = transforms.Compose([
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize((.5, .5, .5), (.5, .5, .5))
+def get_transform():
+    return T.Compose([
+        T.RandomHorizontalFlip(),
+        T.ToTensor(),
+        T.Normalize((.5, .5, .5), (.5, .5, .5)),
     ])
 
+def get_stl10_data(batch_size: int = BATCH_SIZE, root: str = ROOT) -> DataLoader:
     dataset = STL10(
         root=root,
         split="train+unlabeled",
-        download=True,
-        transform=transform
+        download=False,
+        transform=get_transform()
     )
 
-    dataloader = DataLoader(
-        dataset=dataset, 
-        batch_size=batch_size, 
+    return DataLoader(
+        dataset=dataset,
+        batch_size=batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=os.cpu_count(),
         drop_last=True
     )
 
-    return dataloader
+def _debug():
+    dataloader = get_stl10_data()
+    print(f"{os.cpu_count()=}")
+    
+    for image, _ in dataloader:
+        print(f"{image.size(0)=} / {image.shape=}")
+        break
+
+if __name__ == "__main__":
+    _debug()
